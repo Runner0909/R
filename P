@@ -1,0 +1,68 @@
+// src/components/TodoApp.js
+import React, { useState, useEffect } from 'react';
+
+function TodoApp() {
+  const [tasks, setTasks] = useState([]);
+  const [newTask, setNewTask] = useState('');
+
+  useEffect(() => {
+    fetch('https://bz8evy2hr7.execute-api.ap-southeast-2.amazonaws.com') // Thay <API_GATEWAY_URL> bằng URL API thực tế
+      .then(response => response.json())
+      .then(data => setTasks(data))
+      .catch(error => console.error('Error fetching tasks:', error));
+  }, []);
+
+  const addTask = () => {
+    if (newTask.trim() === '') return;
+
+    fetch('https://bz8evy2hr7.execute-api.ap-southeast-2.amazonaws.com', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ task: newTask }),
+    })
+      .then(response => response.json())
+      .then(task => {
+        setTasks([...tasks, task]);
+        setNewTask('');
+      })
+      .catch(error => console.error('Error adding task:', error));
+  };
+
+  const deleteTask = (taskId) => {
+    fetch(`https://bz8evy2hr7.execute-api.ap-southeast-2.amazonaws.com/${taskId}`, {
+      method: 'DELETE',
+    })
+      .then(() => {
+        setTasks(tasks.filter(task => task.taskId !== taskId));
+      })
+      .catch(error => console.error('Error deleting task:', error));
+  };
+
+  return (
+    <div style={{ padding: '20px', maxWidth: '600px', margin: '0 auto' }}>
+      <h1>To-Do List</h1>
+      <div>
+        <input
+          type="text"
+          value={newTask}
+          onChange={(e) => setNewTask(e.target.value)}
+          placeholder="Nhập công việc mới"
+          style={{ padding: '10px', width: '80%', marginRight: '10px' }}
+        />
+        <button onClick={addTask} style={{ padding: '10px' }}>Thêm</button>
+      </div>
+      <ul style={{ listStyle: 'none', padding: '0' }}>
+        {tasks.map(task => (
+          <li key={task.taskId} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0' }}>
+            <span>{task.task}</span>
+            <button onClick={() => deleteTask(task.taskId)} style={{ padding: '5px 10px' }}>Xóa</button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+export default TodoApp;
